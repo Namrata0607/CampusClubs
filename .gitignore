@@ -1,0 +1,73 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log
+
+# Logs
+logs
+*.log
+logs/*.log
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Runtime data
+*.gz
+*.out
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build directories
+/dist
+/build
+/.next
+/.nuxt
+/.output
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Frontend specific
+frontend/node_modules/
+frontend/build/
+frontend/.env
+
+# Backend specific
+backend/node_modules/
+backend/dist/
+backend/.env
+
+# Optional: ignore uploads (if stored locally instead of cloud)
+uploads/
