@@ -35,7 +35,7 @@ router.delete("/clubs/:id", deleteClub);
 
 // Member management
 router.get("/members", getMembers);
-router.patch("/members/:memberId", updateMemberStatus);
+// router.patch("/members/:memberId", updateMemberStatus);
 
 // Request management
 router.get("/requests", getRequests);

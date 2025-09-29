@@ -145,37 +145,6 @@ export const getMembers = async (req, res, next) => {
   }
 };
 
-// PATCH /api/admin/members/:studentId  → approve/reject member
-export const updateMemberStatus = async (req, res, next) => {
-  try {
-    const { memberId } = req.params; // Changed from studentId to memberId
-    const { status } = req.body || {};
-
-    // Validate required fields
-    if (!status) {
-      return next({ status: 400, message: "Status is required in request body" });
-    }
-
-    if (!['pending', 'approved'].includes(status)) {
-      return next({ status: 400, message: "Status must be 'pending' or 'approved'" });
-    }
-
-    const club = await Club.findOne({ admin: req.user._id });
-
-    if (!club) return next({ status: 404, message: "Club not found" });
-
-    const member = club.members.find((m) => m.student.toString() === memberId);
-    if (!member) return next({ status: 404, message: "Member not found" });
-
-    member.status = status;
-    await club.save();
-
-    res.json({ message: "Member status updated", member });
-  } catch (err) {
-    next(err);
-  }
-};
-
 // GET /api/admin/requests - Get all membership requests
 export const getRequests = async (req, res, next) => {
   try {

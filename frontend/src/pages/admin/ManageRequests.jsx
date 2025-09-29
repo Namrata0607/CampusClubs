@@ -33,19 +33,15 @@ const ManageRequests = () => {
     }
   };
 
-  const handleRequestAction = async (requestId, action) => {
+    const handleRequestAction = async (requestId, action) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/members/${requestId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/requests/${requestId}/${action}`,
         {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            status: action === 'approve' ? 'approved' : 'rejected'
-          }),
         }
       );
 
