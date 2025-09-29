@@ -1,12 +1,68 @@
-import './App.css'
+import './App.css';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { useAuth } from './context/useAuth';
+
+// Lazy loaded components
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Login = lazy(() => import('./pages/auth/Login'));
+const Signup = lazy(() => import('./pages/auth/Signup'));
+const StudentRoutes = lazy(() => import('./pages/StudentRoutes'));
+const AdminRoutes = lazy(() => import('./pages/AdminRoutes'));
+
+// Protected Route Component
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { currentUser, isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (requiredRole && currentUser?.role !== requiredRole) {
+    return <Navigate to="/" />;
+  }
+
+  return children;
+};
 
 function App() {
-
   return (
-    <>
-      <h1>Welcome to Campus Clubs</h1>
-    </>
-  )
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        
+        {/* Protected Routes - Student */}
+        <Route 
+          path="/student/*" 
+          element={
+            <ProtectedRoute requiredRole="student">
+              <StudentRoutes />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Protected Routes - Admin */}
+        <Route 
+          path="/admin/*" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminRoutes />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Catch All Route */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Suspense>
+  );
 }
 
-export default App
+export default App;

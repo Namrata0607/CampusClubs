@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -10,7 +11,21 @@ dotenv.config();
 connectDB();
 
 const app = express();
+
+// CORS configuration
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:3000"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
+
+// Test route
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Backend server is running!" });
+});
 
 // Routes
 app.use("/api/auth", authRoutes);

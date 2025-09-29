@@ -5,6 +5,9 @@ const clubSchema = new mongoose.Schema({
   logo: { type: String }, // store URL of logo
   description: { type: String, required: true },
   category: { type: String, required: true },
+  rules: { type: String },
+  maxMembers: { type: Number },
+  isActive: { type: Boolean, default: true },
   admin: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User", // linked to club admin
@@ -13,7 +16,8 @@ const clubSchema = new mongoose.Schema({
   members: [
     {
       student: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      status: { type: String, enum: ["pending", "approved"], default: "pending" }
+      status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+      joinedAt: { type: Date, default: Date.now }
     }
   ],
   // References to events created by this club

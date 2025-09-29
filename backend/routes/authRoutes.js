@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Public Routes
 router.post("/signup", signup);
-router.get("/signin", signin);
+router.post("/signin", signin);
 
 // Private Route (test JWT auth)
 router.get("/me", authMiddleware, getMe);
