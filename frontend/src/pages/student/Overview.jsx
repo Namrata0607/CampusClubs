@@ -1,53 +1,35 @@
-import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/useAuth';
+import { useFetchWithFallback } from '../../hooks/useFetchWithFallback';
+import Avatar from '../../components/common/Avatar';
+import PlaceholderImage from '../../components/common/PlaceholderImage';
 
 const Overview = () => {
-  const { token } = useAuth();
-  const [dashboardData, setDashboardData] = useState({
-    joinedClubs: [],
-    pendingRequests: [],
-    totalJoined: 0,
-    totalPending: 0
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/dashboard`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch dashboard data');
-        }
-
-        const data = await response.json();
-        setDashboardData(data);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    fetchDashboard();
-  }, [token]);
+  const { token, currentUser } = useAuth();
+  const { data: dashboardData, loading, error, usingFallback } = useFetchWithFallback('/api/student/dashboard', token);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
+      <div className="space-y-6 animate-pulse">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white overflow-hidden shadow rounded-lg p-6">
+              <div className="h-12 w-12 bg-gray-200 rounded-md mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-24"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && !usingFallback) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-400 p-4">
+      <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -55,7 +37,8 @@ const Overview = () => {
             </svg>
           </div>
           <div className="ml-3">
-            <p className="text-sm text-red-700">{error}</p>
+            <h3 className="text-sm font-medium text-red-800">Connection Error</h3>
+            <p className="text-sm text-red-700 mt-1">{error}</p>
           </div>
         </div>
       </div>
@@ -64,6 +47,45 @@ const Overview = () => {
 
   return (
     <div className="space-y-6">
+      {/* Welcome Header */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center space-x-3">
+              <Avatar 
+                name={currentUser?.name} 
+                size="lg"
+                src={currentUser?.avatar}
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Welcome back, {currentUser?.name || 'Student'}!
+                </h1>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your Campus Clubs Overview
+                </p>
+              </div>
+            </div>
+          </div>
+          {usingFallback && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    <strong>Demo Mode:</strong> Showing sample data
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Dashboard Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <div className="bg-white overflow-hidden shadow rounded-lg">
@@ -78,7 +100,7 @@ const Overview = () => {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Joined Clubs</dt>
                   <dd>
-                    <div className="text-lg font-medium text-gray-900">{dashboardData.totalJoined}</div>
+                    <div className="text-2xl font-bold text-gray-900">{dashboardData?.joinedClubs?.length || 0}</div>
                   </dd>
                 </dl>
               </div>
@@ -98,7 +120,7 @@ const Overview = () => {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Pending Requests</dt>
                   <dd>
-                    <div className="text-lg font-medium text-gray-900">{dashboardData.totalPending}</div>
+                    <div className="text-2xl font-bold text-gray-900">{dashboardData?.pendingRequests?.length || 0}</div>
                   </dd>
                 </dl>
               </div>
@@ -118,7 +140,7 @@ const Overview = () => {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Upcoming Events</dt>
                   <dd>
-                    <div className="text-lg font-medium text-gray-900">0</div>
+                    <div className="text-2xl font-bold text-gray-900">{dashboardData?.upcomingEvents?.length || 0}</div>
                   </dd>
                 </dl>
               </div>
@@ -131,32 +153,35 @@ const Overview = () => {
       <div>
         <h2 className="text-lg leading-6 font-medium text-gray-900">My Clubs</h2>
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {dashboardData.joinedClubs.length > 0 ? (
+          {dashboardData?.joinedClubs && dashboardData.joinedClubs.length > 0 ? (
             dashboardData.joinedClubs.map((club) => (
-              <div key={club._id} className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <img 
-                        className="h-10 w-10 rounded-full"
-                        src={club.logo || "https://via.placeholder.com/40?text=C"}
-                        alt={club.name}
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-gray-900">{club.name}</h3>
-                      <p className="text-sm text-gray-500">{club.category}</p>
+              <div key={club._id} className="bg-white overflow-hidden shadow rounded-lg h-full flex flex-col">
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex items-center mb-4">
+                    <PlaceholderImage
+                      src={club.logo}
+                      alt={club.name}
+                      size={40}
+                      text={club.name?.charAt(0) || 'C'}
+                      className="rounded-full"
+                    />
+                    <div className="ml-4 flex-1 min-w-0">
+                      <h3 className="text-lg font-medium text-gray-900 truncate">{club.name}</h3>
+                      <p className="text-sm text-gray-500 truncate">{club.category}</p>
                     </div>
                   </div>
-                  <div className="mt-4">
+                  <div className="flex-1">
                     <p className="text-sm text-gray-500 line-clamp-3">{club.description}</p>
                   </div>
-                  <div className="mt-5">
+                  <div className="mt-5 pt-3 border-t border-gray-100">
                     <a
-                      href={`/student/club/${club._id}`}
-                      className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                      href={`/student/my-club/${club._id}`}
+                      className="text-sm font-medium text-indigo-600 hover:text-indigo-500 inline-flex items-center"
                     >
-                      View Details &rarr;
+                      View Details 
+                      <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      </svg>
                     </a>
                   </div>
                 </div>
@@ -184,26 +209,29 @@ const Overview = () => {
           <h2 className="text-lg leading-6 font-medium text-gray-900">Pending Requests</h2>
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {dashboardData.pendingRequests.map((club) => (
-              <div key={club._id} className="bg-white overflow-hidden shadow rounded-lg border border-yellow-200">
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <img 
-                        className="h-10 w-10 rounded-full"
-                        src={club.logo || "https://via.placeholder.com/40?text=C"}
-                        alt={club.name}
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-gray-900">{club.name}</h3>
-                      <p className="text-sm text-gray-500">{club.category}</p>
+              <div key={club._id} className="bg-white overflow-hidden shadow rounded-lg border border-yellow-200 h-full flex flex-col">
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex items-center mb-4">
+                    <PlaceholderImage
+                      src={club.logo}
+                      alt={club.name}
+                      size={40}
+                      text={club.name?.charAt(0) || 'C'}
+                      className="rounded-full"
+                    />
+                    <div className="ml-4 flex-1 min-w-0">
+                      <h3 className="text-lg font-medium text-gray-900 truncate">{club.name}</h3>
+                      <p className="text-sm text-gray-500 truncate">{club.category}</p>
                     </div>
                   </div>
-                  <div className="mt-4">
+                  <div className="flex-1">
                     <p className="text-sm text-gray-500 line-clamp-3">{club.description}</p>
                   </div>
-                  <div className="mt-3">
+                  <div className="mt-5 pt-3 border-t border-gray-100">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3" />
+                      </svg>
                       Pending approval
                     </span>
                   </div>

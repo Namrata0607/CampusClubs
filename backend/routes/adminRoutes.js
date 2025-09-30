@@ -7,7 +7,6 @@ import {
   updateClub,
   deleteClub,
   getMembers,
-  updateMemberStatus,
   getRequests,
   handleRequest,
 //   createEvent,

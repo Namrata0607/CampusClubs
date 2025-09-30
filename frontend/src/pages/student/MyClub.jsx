@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/useAuth';
 
 const MyClub = () => {
@@ -15,8 +16,8 @@ const MyClub = () => {
   useEffect(() => {
     const fetchClubDetails = async () => {
       try {
-        // Check if user is a member of this club
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/my-clubs/${clubId}`, {
+        // Get club details - backend should check if user is a member
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/clubs/${clubId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -32,8 +33,8 @@ const MyClub = () => {
         }
 
         const data = await response.json();
-        setClub(data.club);
-        setActivities(data.activities || []);
+        setClub(data);  // Club data is directly in response
+        setActivities(data.events || []);  // Events are in 'events' field
         setAnnouncements(data.announcements || []);
         setLoading(false);
       } catch (err) {
@@ -50,9 +51,11 @@ const MyClub = () => {
       return;
     }
 
+    const loadingToast = toast.loading('Leaving club...');
+    
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/clubs/${clubId}/leave`, {
-        method: 'POST',
+        method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -63,8 +66,14 @@ const MyClub = () => {
         throw new Error('Failed to leave club');
       }
 
+      toast.success('Successfully left the club', {
+        id: loadingToast,
+      });
       navigate('/student/dashboard');
     } catch (err) {
+      toast.error(err.message || 'Failed to leave club', {
+        id: loadingToast,
+      });
       setError(err.message);
     }
   };
@@ -117,9 +126,19 @@ const MyClub = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0 h-16 w-16">
               <img
-                className="h-16 w-16 rounded-full object-cover"
-                src={club.logo || "https://via.placeholder.com/64?text=C"}
+                className="h-16 w-16 rounded-full object-cover bg-gray-200"
+                src={club.logo}
                 alt={club.name}
+                onError={(e) => {
+                  e.target.src = `data:image/svg+xml,${encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+                      <rect width="64" height="64" fill="#e5e7eb"/>
+                      <text x="32" y="40" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="24" font-weight="bold">
+                        ${club.name?.charAt(0)?.toUpperCase() || 'C'}
+                      </text>
+                    </svg>
+                  `)}`;
+                }}
               />
             </div>
             <div className="ml-5">
@@ -150,7 +169,7 @@ const MyClub = () => {
             </div>
             <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500">Members</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{club.memberCount || 0}</dd>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{club.approvedMembers?.length || 0}</dd>
             </div>
             {club.meetingSchedule && (
               <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -253,28 +272,36 @@ const MyClub = () => {
           <p className="mt-1 max-w-2xl text-sm text-gray-500">Fellow club members</p>
         </div>
         <div className="border-t border-gray-200">
-          {club.members && club.members.length > 0 ? (
+          {club.approvedMembers && club.approvedMembers.length > 0 ? (
             <ul className="divide-y divide-gray-200">
-              {club.members.map((member) => (
-                <li key={member._id} className="px-4 py-4 sm:px-6 flex items-center">
+              {club.approvedMembers.map((memberData) => (
+                <li key={memberData._id} className="px-4 py-4 sm:px-6 flex items-center">
                   <div className="flex-shrink-0 h-10 w-10">
                     <img
-                      className="h-10 w-10 rounded-full"
-                      src={member.avatar || "https://via.placeholder.com/40?text=U"}
-                      alt={member.name}
+                      className="h-10 w-10 rounded-full object-cover bg-gray-200"
+                      src={memberData.student.avatar}
+                      alt={memberData.student.name}
+                      onError={(e) => {
+                        e.target.src = `data:image/svg+xml,${encodeURIComponent(`
+                          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                            <rect width="40" height="40" fill="#e5e7eb"/>
+                            <text x="20" y="25" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="16" font-weight="bold">
+                              ${memberData.student.name?.charAt(0)?.toUpperCase() || 'U'}
+                            </text>
+                          </svg>
+                        `)}`;
+                      }}
                     />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                    <p className="text-sm text-gray-500">{member.email}</p>
+                    <p className="text-sm font-medium text-gray-900">{memberData.student.name}</p>
+                    <p className="text-sm text-gray-500">{memberData.student.email}</p>
                   </div>
-                  {member.role === 'admin' && (
-                    <div className="ml-auto">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        Admin
-                      </span>
-                    </div>
-                  )}
+                  <div className="ml-auto flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">
+                      Joined: {new Date(memberData.joinedAt).toLocaleDateString()}
+                    </span>
+                  </div>
                 </li>
               ))}
             </ul>

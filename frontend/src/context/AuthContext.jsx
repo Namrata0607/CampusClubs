@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export const AuthContext = createContext();
 
@@ -39,6 +40,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('studentToken');
             localStorage.removeItem('adminToken');
             setToken(null);
+            toast.error('Session expired. Please login again.');
           }
         }
       } catch (error) {
@@ -117,6 +119,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('adminToken');
     setToken(null);
     setCurrentUser(null);
+    toast.success('Logged out successfully!');
   };
 
   const value = {

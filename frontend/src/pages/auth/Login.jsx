@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/useAuth';
 
 const Login = () => {
@@ -15,11 +16,20 @@ const Login = () => {
     setError('');
     setLoading(true);
     
+    const loadingToast = toast.loading('Signing in...');
+    
     try {
       const user = await login(email, password);
+      toast.success(`Welcome back, ${user.name || 'User'}!`, {
+        id: loadingToast,
+      });
       navigate(user.role === 'admin' ? '/admin' : '/student');
     } catch (err) {
-      setError(err.message || 'Failed to login. Please check your credentials.');
+      const errorMessage = err.message || 'Failed to login. Please check your credentials.';
+      toast.error(errorMessage, {
+        id: loadingToast,
+      });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

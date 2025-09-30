@@ -5,14 +5,44 @@ import Announcement from "../models/Announcement.js";
 // GET /api/admin/dashboard
 export const getDashboard = async (req, res, next) => {
   try {
-    // Return all clubs created by this admin. Use `find` (array) instead of `findOne` (single doc).
+    // Get all clubs created by this admin
     const clubs = await Club.find({ admin: req.user._id })
       .populate("members.student", "name email")
       .populate({ path: "events", model: "Event" })
-      .populate({ path: "announcements", model: "Announcement" });
+      .populate({ path: "announcements", model: "Announcement" })
+      .sort({ createdAt: -1 });
 
-    if (!clubs || clubs.length === 0) return next({ status: 404, message: "No clubs found" });
-    res.json(clubs);
+    // Calculate total students across all clubs
+    const totalStudents = clubs.reduce((total, club) => {
+      return total + (club.members ? club.members.length : 0);
+    }, 0);
+
+    // Get recent clubs (last 5)
+    const recentClubs = clubs.slice(0, 5).map(club => ({
+      _id: club._id,
+      name: club.name,
+      category: club.category,
+      description: club.description,
+      logo: club.logo,
+      createdAt: club.createdAt,
+      members: club.members,
+      memberCount: club.members ? club.members.length : 0
+    }));
+
+    // Calculate pending requests from club members with status 'pending'
+    const pendingRequests = clubs.reduce((total, club) => {
+      const pendingMembers = club.members ? club.members.filter(member => member.status === 'pending') : [];
+      return total + pendingMembers.length;
+    }, 0);
+
+    const dashboardStats = {
+      totalClubs: clubs.length,
+      totalStudents: totalStudents,
+      pendingRequests: pendingRequests,
+      recentClubs: recentClubs
+    };
+
+    res.json(dashboardStats);
   } catch (err) {
     next(err);
   }

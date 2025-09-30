@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/useAuth';
 
 const Signup = () => {
@@ -29,14 +30,19 @@ const Signup = () => {
     
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
+      const errorMessage = 'Passwords do not match';
+      toast.error(errorMessage);
+      return setError(errorMessage);
     }
     
     if (formData.password.length < 6) {
-      return setError('Password must be at least 6 characters');
+      const errorMessage = 'Password must be at least 6 characters long';
+      toast.error(errorMessage);
+      return setError(errorMessage);
     }
 
     setLoading(true);
+    const loadingToast = toast.loading('Creating your account...');
     
     try {
       await register(
@@ -45,10 +51,18 @@ const Signup = () => {
         formData.password,
         formData.role
       );
+      toast.success('Account created successfully! Please login to continue.', {
+        id: loadingToast,
+        duration: 5000,
+      });
       // Redirect to login after successful registration
-      navigate('/login', { state: { message: 'Registration successful! Please login.' } });
+      navigate('/login');
     } catch (err) {
-      setError(err.message || 'Failed to create account.');
+      const errorMessage = err.message || 'Failed to create account.';
+      toast.error(errorMessage, {
+        id: loadingToast,
+      });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

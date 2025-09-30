@@ -1,9 +1,11 @@
 import { useState, Fragment } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   
@@ -25,8 +27,13 @@ const DashboardLayout = ({ children }) => {
       ];
 
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     logout();
     navigate('/');
+    setShowLogoutModal(false);
   };
 
   return (
@@ -186,6 +193,18 @@ const DashboardLayout = ({ children }) => {
           </div>
         </main>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to logout? You will need to sign in again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="primary"
+      />
     </div>
   );
 };
