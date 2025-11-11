@@ -1,0 +1,11 @@
+/* Global styles applied across app */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: #f5f4ff;
+  color: #333;
+}
+
+h1, h2 {
+  color: #d81b60;
+}
